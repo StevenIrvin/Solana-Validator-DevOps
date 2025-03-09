@@ -1,0 +1,45 @@
+- name: Copy ssh key
+  ansible.builtin.copy:
+    src: ~/.ssh/agave-deploy
+    dest: "/home/{{ user }}/.ssh/solana-deploy"
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: '0600'
+
+- name: Copy ssh pub key
+  ansible.builtin.copy:
+    src: ~/.ssh/agave-deploy.pub
+    dest: "/home/{{ user }}/.ssh/solana-deploy.pub"
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: '0644'
+
+- name: Fetch
+  become: true
+  become_user: solana
+  ansible.builtin.command:
+    chdir: "/opt/firedancer"
+    cmd: " git fetch --all"
+  environment:
+    GIT_SSH_COMMAND: "ssh -i /home/solana/.ssh/agave-deploy -o StrictHostKeyChecking=no"
+
+- name: Update git submodules
+  become: true
+  become_user: "{{ user }}"
+  ansible.builtin.shell: git submodule update --init --recursive
+  args:
+    chdir: "/opt/firedancer"
+
+- name: Set Git email
+  become: true
+  become_user: solana
+  ansible.builtin.command:
+    chdir: "/opt/firedancer"
+    cmd: "git config --global user.email '{{ git-email }}'"
+
+- name: Set Git user name
+  become: true
+  become_user: solana
+  ansible.builtin.command:
+    chdir: "/opt/firedancer"
+    cmd: "git config --global user.name '{{ git-name }}'"

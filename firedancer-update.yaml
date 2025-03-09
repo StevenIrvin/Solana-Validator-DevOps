@@ -1,0 +1,29 @@
+- name: Setup Firedancer Mainnet
+  hosts: all
+  become: true
+  tasks:
+    - name: agave-source
+      import_tasks: "{{ playbook_dir }}/firedancer/source.yaml"
+      vars:
+        user: solana
+
+    - name: vars
+      include_tasks: "{{ playbook_dir }}/vars/main.yaml"
+      loop: "{{ ansible_play_hosts }}"
+      loop_control:
+        loop_var: item
+      when: inventory_hostname == item
+      vars:
+        user: solana
+
+    - name: git
+      import_tasks: "{{ playbook_dir }}/firedancer/git.yaml"
+      vars:
+        user: solana
+
+    - name: firedancer-build
+      import_tasks: "{{ playbook_dir }}/firedancer/build.yaml"
+      vars:
+        user: solana
+        version: "{{ hostvars[inventory_hostname]['version'] }}"
+#        version: "25"

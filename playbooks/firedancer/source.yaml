@@ -1,0 +1,64 @@
+- name: Check if fd folder is already created
+  become: true
+  become_user: "{{ user }}"
+  ansible.builtin.stat:
+    path: "/opt/firedancer"
+  register: fd_dir
+
+- name: Create firedancer directory
+  ansible.builtin.file:
+    path: "/opt/firedancer"
+    state: directory
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: '0755'
+  when: fd_dir.stat.exists == False
+
+- name: Check if source is cloned already
+  become: true
+  become_user: "{{ user }}"
+  ansible.builtin.stat:
+    path: "/opt/firedancer/.git"
+  register: fd_source
+
+- name: Clone fd source
+  become: true
+  become_user: "{{ user }}"
+  ansible.builtin.shell: "git clone https://github.com/firedancer-io/firedancer.git --recurse-submodules /opt/firedancer"
+  args:
+    chdir: "/opt/firedancer"
+  when: fd_source.stat.exists == False
+
+- name: Ensure no local changes in the repo before proceeding
+  become: true
+  become_user: "{{ user }}"
+  ansible.builtin.shell: |
+    git reset
+    git restore .
+    git checkout master
+    git clean -f
+    git clean -fd
+  args:
+    chdir: "/opt/firedancer"
+  register: git_task_result
+
+- name: Fetch tag
+  become: true
+  become_user: "{{ user }}"
+  ansible.builtin.shell: "git fetch origin tag v{{ hostvars[inventory_hostname]['version'] }} --no-tags"
+  args:
+    chdir: "/opt/firedancer"
+
+- name: Checkout tag
+  become: true
+  become_user: "{{ user }}"
+  ansible.builtin.shell: "git checkout tags/v{{ hostvars[inventory_hostname]['version'] }}"
+  args:
+    chdir: "/opt/firedancer"
+
+- name: Update git submodules
+  become: true
+  become_user: "{{ user }}"
+  ansible.builtin.shell: git submodule update --init --recursive
+  args:
+    chdir: "/opt/firedancer"

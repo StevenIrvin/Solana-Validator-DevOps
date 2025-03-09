@@ -1,0 +1,24 @@
+- name: Configure PS1 based on environment
+  become: true
+  ansible.builtin.lineinfile:
+    path: /home/{{ user }}/.bashrc
+    regexp: '^export PS1='
+    line: |
+      export PS1="\[\e[1;{{ '31' if hostvars[inventory_hostname]['env'] == 'mainnet' else '32' }}m\]\u@{{ inventory_hostname }}\[\e[0m\]:\[\e[m\]\[\e[36m\]\w\[\e[m\]$ "
+    create: true
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: '0644'
+    insertafter: EOF
+
+- name: fstab persistence
+  ansible.builtin.lineinfile:
+    path: /home/{{ user }}/.bashrc
+    line: "{{ item }}"
+    state: present
+    create: yes
+  with_items:
+    - "alias catchup='solana catchup --our-localhost'"
+    - "alias pubkey='fdctl keys pubkey'"
+    - "alias monitor='sudo fdctl monitor'"
+  become: yes
