@@ -56,6 +56,13 @@ Solana-Validator-DevOps/
 └── agave-deploy.pub
 ```
 
+### Validator Keys
+- Validator keypairs (`validator-keypair.json`, `vote-account-keypair.json`) for each environment (`testnet`, `mainnet`) must be available on the control node at:
+
+```bash
+~/sln/validator/<root_name>/<env>/
+```
+
 ## Setup Instructions
 
 ### 1. Clone the Repository
@@ -146,12 +153,23 @@ ansible-playbook -i inventory.yaml firedancer-update.yaml -v
 
 ## Key Features
 
-#### Environment-Specific Prompt
+### Environment-Specific Config
+
+- Creates `/etc/firedancer/config.toml` based on env
+- Creates systmd service files for Firedancer based on env
+
+### Transfers Validator Keys
+
+- Deploys keys to /etc/firedancer/:
+  - staked-identity.json to `/etc/firedancer/staked-identity.json`
+  - vote-account-keypair.json tp `/etc/firedancer/vote-account-keypair.json`
+
+### Environment-Specific Prompt
 - The PS1 prompt in .bashrc changes color based on env:
   - Red for main (intended as mainnet).
   - Green for test.
 
-#### Bash Aliases
+### Bash Aliases
 
 Added to `/home/solana/.bashrc`:
 
@@ -159,7 +177,7 @@ Added to `/home/solana/.bashrc`:
 - pubkey: fdctl keys pubkey
 - monitor: sudo fdctl monitor
 
-#### Firedancer Configuration
+### Firedancer Configuration
 Post-reboot, the playbook runs:
 
 - fdctl configure init sysctl

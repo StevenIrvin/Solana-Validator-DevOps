@@ -1,0 +1,111 @@
+- name: Check if fd folder is already created
+  become: true
+  become_user: "{{ user }}"
+  ansible.builtin.stat:
+    path: "/etc/firedancer"
+  register: fd_dir
+
+- name: Create firedancer directory
+  ansible.builtin.file:
+    path: "/etc/firedancer"
+    state: directory
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: '0755'
+  when: fd_dir.stat.exists == False
+
+- name: Check if fd log dir is already created
+  become: true
+  become_user: "{{ user }}"
+  ansible.builtin.stat:
+    path: "/mnt/ledger/logs/"
+  register: fd_log
+
+- name: Create firedancer log directory
+  ansible.builtin.file:
+    path: "/mnt/ledger/logs/"
+    state: directory
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: '0755'
+  when: fd_log.stat.exists == False
+
+- name: Create firedancer testnet config
+  become: true
+  ansible.builtin.template:
+    src: templates/config.toml.j2
+    dest: /etc/firedancer/config.toml
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: '0644'
+  vars:
+    vote_pub_key: "{{ hostvars[inventory_hostname]['vote_pub_key'] }}"
+    known_validators: '
+        "5D1fNXzvv5NjV1ysLjirC4WY92RNsVH18vjmcszZd8on",
+        "7XSY3MrYnK8vq693Rju17bbPkCN3Z7KvvfvJx4kdrsSY",
+        "Ft5fbkqNa76vnsjYNwjDZUXoTWpP7VYm3mtsaQckQADN",
+        "9QxCLckBiJc783jnMvXZubK4wH86Eqqvashtrwvcsgkv",
+        "FT9QgTVo375TgDAQusTgpsfXqTosCJLfrBpoVdcbnhtS"'
+    solana_metrics_config: '"host=https://metrics.solana.com:8086,db=tds,u=testnet_write,p=c4fa841aa918bf8274e3e2a44d77568d9861b3ea"'
+    entrypoints: '
+        "entrypoint.testnet.solana.com:8001",
+        "entrypoint2.testnet.solana.com:8001",
+        "entrypoint3.testnet.solana.com:8001"'
+    when: env == 'testnet'
+
+- name: Create firedancer mainnet config
+  become: true
+  ansible.builtin.template:
+    src: templates/config.toml.j2
+    dest: /etc/firedancer/config.toml
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: '0644'
+  vars:
+    vote_pub_key: "{{ hostvars[inventory_hostname]['vote_pub_key'] }}"
+    known_validators: '
+        "Cogent51kHgGLHr7zpkpRjGYFXM57LgjHjDdqXd4ypdA",
+        "EdGevanA2MZsDpxDXK6b36FH7RCcTuDZZRcc6MEyE9hy",
+        "HEL1USMZKAL2odpNBj2oCjffnFGaYwmbGmyewGv1e2TU",
+        "LA1NEzryoih6CQW3gwQqJQffK2mKgnXcjSQZSRpM3wc",
+        "Ninja1spj6n9t5hVYgF3PdnYz2PLnkt7rvaw3firmjs",
+        "PUmpKiNnSVAZ3w4KaFX6jKSjXUNHFShGkXbERo54xjb",
+        "7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2",
+        "GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ",
+        "DE1bawNcRJB9rVm3buyMVfr8mBEoyyu73NBovf2oXJsJ",
+        "CakcnaRDHka2gXyfbEd2d3xsvkJkqsLw2akB3zsN1D2S",
+        "1KXvrkPXwkGF6NK1zyzVuJqbXfpenPVPP6hoiK9bsK3",
+        "3V2xaccDpFib4DbTksdiveNDmiwpXBqSWyjSof3w1Bg7",
+        "61QB1Evn9E3noQtpJm4auFYyHSXS5FPgqKtPgwJJfEQk",
+        "AsMpvJ3DZ2Ydu1WTRMAyMH4QjSLiUG39rKzfzvtE1bWr",
+        "BitokuDHQiAhpUKrwx1VssAAoW5Rst8zB6gpfoaxM3Kh",
+        "DB7DNWMVQASMFxcjkwdr4w4eg3NmfjWTk2rqFMMbrPLA"'
+    solana_metrics_config: '"host=https://metrics.solana.com:8086,db=mainnet-beta,u=mainnet-beta_write,p=password"'
+    entrypoints: '
+        "184.105.146.35:8000",
+        "bmsolv.im-0.net:10001",
+        "msolv.im-0.net:10001",
+        "entrypoint3.mainnet-beta.solana.com:8001",
+        "entrypoint4.mainnet-beta.solana.com:8001",
+        "sentry.laine.co.za:8001"'
+  when: env == 'mainnet'
+
+## TODO: add check to make sure toml file is parseable
+
+## TODO: add check to make sure right vote and identity key will be sent
+
+- name: Move Identity Key
+  ansible.builtin.copy:
+    src: "~/sln/validator/{{ hostvars[inventory_hostname]['root_name'] }}/{{ env }}/validator-keypair.json"
+    dest: /etc/firedancer/staked-identity.json
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: '0600'
+
+- name: Move Vote Key
+  ansible.builtin.copy:
+    src: "~/sln/validator/{{ hostvars[inventory_hostname]['root_name'] }}/{{ env }}/vote-account-keypair.json"
+    dest: /etc/firedancer/vote-account-keypair.json
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: '0600'

@@ -16,6 +16,16 @@
       vars:
         user: solana
 
+    - name: fd-systemd
+      import_tasks: "{{ playbook_dir }}/firedancer/systemd.yaml"
+      vars:
+        user: solana
+
+    - name: fd-config
+      import_tasks: "{{ playbook_dir }}/firedancer/config.yaml"
+      vars:
+        user: solana
+
     - name: git
       import_tasks: "{{ playbook_dir }}/firedancer/git.yaml"
       vars:
@@ -26,4 +36,4 @@
       vars:
         user: solana
         version: "{{ hostvars[inventory_hostname]['version'] }}"
-#        version: "25"
+

@@ -1,0 +1,12 @@
+- name: Copy service file
+  ansible.builtin.copy:
+    src: templates/firedancer.service
+    dest: "/etc/systemd/system/firedancer.service"
+    owner: "root"
+    group: "root"
+    mode: '0644'
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: yes
+

@@ -1,0 +1,16 @@
+[Unit]
+Description=Solana Firedancer Validator
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+LimitNOFILE=1000000
+LogRateLimitIntervalSec=0
+ExecStart=/opt/firedancer/build/native/gcc/bin/fdctl --config /etc/firedancer/config.toml run
+
+[Install]
+WantedBy=multi-user.target
