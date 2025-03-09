@@ -24,20 +24,18 @@
 - name: Clone fd source
   become: true
   become_user: "{{ user }}"
-  ansible.builtin.shell: "git clone https://github.com/firedancer-io/firedancer.git --recurse-submodules /opt/firedancer"
-  args:
-    chdir: "/opt/firedancer"
+  ansible.builtin.git:
+    repo: "https://github.com/firedancer-io/firedancer.git"
+    dest: "/opt/firedancer"
+    recursive: true
+    update: no
   when: fd_source.stat.exists == False
 
 - name: Ensure no local changes in the repo before proceeding
   become: true
   become_user: "{{ user }}"
   ansible.builtin.shell: |
-    git reset
-    git restore .
-    git checkout master
-    git clean -f
-    git clean -fd
+    git diff --quiet && git diff --cached --quiet || (git reset && git restore . && git checkout master && git clean -f && git clean -fd)
   args:
     chdir: "/opt/firedancer"
   register: git_task_result

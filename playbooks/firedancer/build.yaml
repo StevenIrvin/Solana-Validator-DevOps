@@ -51,9 +51,9 @@
 - name: Validate
   ansible.builtin.assert:
     that:
-      - "version in validator_version.stdout"
-    fail_msg: "Fail"
-    success_msg: "Success"
+      - "'{{ version }}' in validator_version.stdout"
+    fail_msg: "Version {{ version }} not found"
+    success_msg: "Version {{ version }} confirmed"
 
 - name: Reboot the server and wait for it to come back online
   become: true
@@ -98,7 +98,8 @@
     chdir: "/opt/firedancer"
     cmd: "fdctl configure init hyperthreads"
 
-- name: Restart
+- name: Restart Firedancer service
   become: true
-  ansible.builtin.command:
-    cmd: "service firedancer restart"
+  ansible.builtin.service:
+    name: firedancer
+    state: restarted
